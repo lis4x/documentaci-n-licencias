@@ -61,7 +61,7 @@ export default function Dashboard() {
 
       {/* Encabezado */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>Panel de Consulta USMS</h1>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>Base de datos Licencias de Armas</h1>
         <button
           onClick={() => signOut({ callbackUrl: '/' })}
           style={{
