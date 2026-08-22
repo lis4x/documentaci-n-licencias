@@ -30,6 +30,15 @@ export default function Dashboard() {
 
   return (
     <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
+      {/* Reseteo global de márgenes para eliminar el borde blanco */}
+      <style jsx global>{`
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background-color: #0b0e14 !important;
+        }
+      `}</style>
+
       {/* Encabezado */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>Panel de Consulta USMS</h1>
