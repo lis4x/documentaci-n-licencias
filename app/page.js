@@ -9,7 +9,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (session?.user?.hasRole) {
+    if (session?.user) {
       setLoading(true);
       fetch("/api/getData")
         .then((res) => res.json())
@@ -34,7 +34,7 @@ export default function Home() {
     );
   }
 
-  if (!session.user.hasRole) {
+  if (false) {
     return (
       <div style={styles.center}>
         <h1 style={{color: "#ff4444"}}>Acceso Denegado</h1>
