@@ -8,16 +8,6 @@ export default function Dashboard() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Redirigir al login si no hay sesión activa.
-  // IMPORTANTE: se le pasa callbackUrl: '/' para que, una vez logueado,
-  // NextAuth te traiga de vuelta al dashboard y no se quede en loop
-  // apuntando a /api/auth/signin.
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      signIn('discord', { callbackUrl: '/' });
-    }
-  }, [status]);
-
   // Cargar datos de la API solo si está autenticado
   useEffect(() => {
     if (status === 'authenticated') {
@@ -53,8 +43,31 @@ export default function Dashboard() {
     );
   }
 
+  // En vez de redirigir solo, mostramos una pantalla propia con un botón.
+  // Así el usuario elige cuándo volver a autorizar en Discord, en lugar
+  // de que "Salir" lo mande directo de nuevo al popup de consentimiento.
   if (status === 'unauthenticated') {
-    return null;
+    return (
+      <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif', gap: '20px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0 }}>Base de datos Licencias de Armas</h1>
+        <p style={{ color: '#8b949e', margin: 0 }}>Sesión cerrada. Iniciá sesión para continuar.</p>
+        <button
+          onClick={() => signIn('discord', { callbackUrl: '/' })}
+          style={{
+            backgroundColor: '#5865F2',
+            color: '#ffffff',
+            border: 'none',
+            padding: '10px 20px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: '600',
+            fontSize: '14px'
+          }}
+        >
+          Iniciar sesión con Discord
+        </button>
+      </div>
+    );
   }
 
   const headers = data[1] || data[0] || [];
