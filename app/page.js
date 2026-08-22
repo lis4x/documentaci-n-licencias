@@ -25,35 +25,43 @@ export default function Dashboard() {
     fetchData();
   }, []);
 
-  // Procesa encabezados y filas omitiendo el logo superior
   const headers = data[1] || data[0] || [];
   const rows = data.slice(2);
 
   return (
-    <div className="min-h-screen bg-[#0d1117] text-gray-200 p-6 font-sans">
+    <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
       {/* Encabezado */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-white tracking-wide">Panel de Consulta USMS</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>Panel de Consulta USMS</h1>
         <button
           onClick={() => signOut({ callbackUrl: '/' })}
-          className="bg-[#e53e3e] hover:bg-red-600 text-white font-medium px-4 py-1.5 rounded transition duration-150 cursor-pointer text-sm shadow"
+          style={{
+            backgroundColor: '#dc2626',
+            color: '#ffffff',
+            border: 'none',
+            padding: '8px 16px',
+            borderRadius: '4px',
+            cursor: 'pointer',
+            fontWeight: '600',
+            fontSize: '13px'
+          }}
         >
           Salir
         </button>
       </div>
 
-      {/* Tabla con diseño oscuro original */}
-      <div className="bg-[#161b22] border border-gray-800 rounded-lg overflow-x-auto shadow-2xl">
+      {/* Contenedor Tabla */}
+      <div style={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '6px', overflowX: 'auto' }}>
         {loading ? (
-          <div className="p-8 text-center text-gray-400">Cargando registros...</div>
+          <div style={{ padding: '24px', textAlign: 'center', color: '#8b949e' }}>Cargando registros...</div>
         ) : data.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">No se encontraron registros o la tabla está vacía.</div>
+          <div style={{ padding: '24px', textAlign: 'center', color: '#8b949e' }}>No se encontraron registros o la tabla está vacía.</div>
         ) : (
-          <table className="w-full text-left border-collapse text-xs">
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
             <thead>
-              <tr className="bg-[#1c2128] border-b border-gray-800 text-gray-300">
+              <tr style={{ backgroundColor: '#21262d', borderBottom: '1px solid #30363d', color: '#c9d1d9' }}>
                 {headers.map((header, i) => (
-                  <th key={i} className="p-3 font-semibold border-r border-gray-800 last:border-r-0 whitespace-nowrap">
+                  <th key={i} style={{ padding: '10px 12px', borderRight: '1px solid #30363d', whiteSpace: 'nowrap' }}>
                     {header}
                   </th>
                 ))}
@@ -61,9 +69,9 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {rows.map((row, rowIndex) => (
-                <tr key={rowIndex} className="border-b border-gray-800/60 hover:bg-[#1f242c] transition-colors">
+                <tr key={rowIndex} style={{ borderBottom: '1px solid #21262d' }}>
                   {headers.map((_, colIndex) => (
-                    <td key={colIndex} className="p-3 border-r border-gray-800/40 last:border-r-0 text-gray-300 whitespace-nowrap">
+                    <td key={colIndex} style={{ padding: '10px 12px', borderRight: '1px solid #21262d', color: '#8b949e', whiteSpace: 'nowrap' }}>
                       {row[colIndex] || ''}
                     </td>
                   ))}
