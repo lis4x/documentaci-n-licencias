@@ -19,7 +19,7 @@ export async function GET() {
     // Si tu pestaña tiene un nombre específico (ejemplo: 'Hoja 1'), ponlo aquí antes del !
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
-      range: "'Licencias'!A1:Z1000", 
+      range: "Licencias'!A1:Z1000", 
     });
 
     return Response.json(response.data.values || []);
