@@ -14,7 +14,15 @@ export default function Home() {
       fetch("/api/getData")
         .then((res) => res.json())
         .then((resData) => {
-          setData(resData);
+          if (Array.isArray(resData)) {
+            setData(resData);
+          } else {
+            setData([]);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setData([]);
           setLoading(false);
         });
     }
@@ -34,7 +42,7 @@ export default function Home() {
     );
   }
 
-  if (false) {
+  if (session.user.hasRole === false) {
     return (
       <div style={styles.center}>
         <h1 style={{color: "#ff4444"}}>Acceso Denegado</h1>
@@ -44,8 +52,9 @@ export default function Home() {
     );
   }
 
-  const filteredData = data.filter((row) =>
-    row.some((cell) => cell.toLowerCase().includes(search.toLowerCase()))
+  const safeData = Array.isArray(data) ? data : [];
+  const filteredData = safeData.filter((row) =>
+    Array.isArray(row) && row.some((cell) => String(cell).toLowerCase().includes(search.toLowerCase()))
   );
 
   return (
@@ -69,13 +78,19 @@ export default function Home() {
         <div style={styles.tableContainer}>
           <table style={styles.table}>
             <tbody>
-              {filteredData.map((row, index) => (
-                <tr key={index}>
-                  {row.map((cell, cIndex) => (
-                    <td key={cIndex} style={styles.td}>{cell}</td>
-                  ))}
+              {filteredData.length > 0 ? (
+                filteredData.map((row, index) => (
+                  <tr key={index}>
+                    {row.map((cell, cIndex) => (
+                      <td key={cIndex} style={styles.td}>{String(cell)}</td>
+                    ))}
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td style={styles.td}>No se encontraron registros o la tabla está vacía.</td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
