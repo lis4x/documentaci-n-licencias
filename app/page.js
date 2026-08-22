@@ -1,17 +1,20 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { useSession, signIn, signOut } from 'next-auth/react';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Redirigir al login si no hay sesión activa
+  // Redirigir al login si no hay sesión activa.
+  // IMPORTANTE: se le pasa callbackUrl: '/' para que, una vez logueado,
+  // NextAuth te traiga de vuelta al dashboard y no se quede en loop
+  // apuntando a /api/auth/signin.
   useEffect(() => {
     if (status === 'unauthenticated') {
-      window.location.href = '/api/auth/signin';
+      signIn('discord', { callbackUrl: '/' });
     }
   }, [status]);
 
@@ -37,8 +40,8 @@ export default function Dashboard() {
   }, [status]);
 
   const handleLogout = async () => {
-    const res = await signOut({ redirect: false, callbackUrl: '/api/auth/signin' });
-    window.location.href = res.url || '/api/auth/signin';
+    const res = await signOut({ redirect: false, callbackUrl: '/' });
+    window.location.href = res.url || '/';
   };
 
   // Mientras valida la sesión, muestra pantalla de carga
@@ -108,12 +111,12 @@ export default function Dashboard() {
       </div>
 
       {/* Contenedor de Tabla */}
-      <div 
+      <div
         className="tabla-scroll"
-        style={{ 
-          backgroundColor: '#161b22', 
-          border: '1px solid #30363d', 
-          borderRadius: '6px', 
+        style={{
+          backgroundColor: '#161b22',
+          border: '1px solid #30363d',
+          borderRadius: '6px',
           overflowX: 'scroll',
           paddingBottom: '8px'
         }}
