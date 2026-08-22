@@ -1,66 +1,67 @@
 import NextAuth from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
+import { isUserAuthorized } from "../../../../lib/discordAuth";
 
-// LISTADO DE ROLES PERMITIDOS
-const ALLOWED_ROLE_IDS = [
-  "869199672311427082", // Gobierno
-  "883117884929376257", // USSS
-  "972822087452459056", // USMS
-  "845681987955982356", // LSC
-  "799005540339941446", // LSPD
-];
+// Cada cuánto se vuelve a chequear el rol en Discord mientras la sesión
+// sigue "viva" en el navegador (independiente del maxAge de la sesión).
+const RECHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
 
 export const authOptions = {
   providers: [
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
-      authorization: { params: { scope: "identify guilds guilds.members.read" } },
+      // Ya no necesitamos "guilds" ni "guilds.members.read": los roles se
+      // consultan server-side con el bot token, no con el token del usuario.
+      authorization: { params: { scope: "identify" } },
     }),
   ],
+
+  session: {
+    strategy: "jwt",
+    maxAge: 60 * 60, // la sesión expira a la hora -> obliga a re-loguear/revalidar
+  },
+
   callbacks: {
-    async signIn({ account }) {
-      try {
-        const token = account.access_token;
+    // Se ejecuta una sola vez, en el momento del login.
+    async signIn({ profile }) {
+      const { authorized } = await isUserAuthorized(profile.id);
+      return authorized; // si es false, NextAuth rechaza el login
+    },
 
-        // 1. Obtener la lista de servidores del usuario
-        const guildsResponse = await fetch("https://discord.com/api/v10/users/@me/guilds", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (!guildsResponse.ok) return false;
-
-        const userGuilds = await guildsResponse.json();
-
-        // 2. Consultar la información del usuario en cada servidor para leer sus roles
-        for (const guild of userGuilds) {
-          const memberResponse = await fetch(
-            `https://discord.com/api/v10/users/@me/guilds/${guild.id}/member`,
-            {
-              headers: { Authorization: `Bearer ${token}` },
-            }
-          );
-
-          if (memberResponse.ok) {
-            const memberData = await memberResponse.json();
-            const userRoles = memberData.roles || [];
-
-            // Comprobar si el usuario posee alguno de los roles permitidos
-            const hasAuthorizedRole = userRoles.some((roleId) =>
-              ALLOWED_ROLE_IDS.includes(roleId)
-            );
-
-            if (hasAuthorizedRole) {
-              return true;
-            }
-          }
-        }
-
-        return false;
-      } catch (error) {
-        console.error("Error al validar roles de Discord:", error);
-        return false;
+    // Se ejecuta al crear el JWT (login) y cada vez que se accede a la sesión.
+    async jwt({ token, profile, account }) {
+      if (account && profile) {
+        // Login inicial: ya pasó signIn, guardamos su id de Discord.
+        token.discordId = profile.id;
+        token.authorized = true;
+        token.lastChecked = Date.now();
+        return token;
       }
+
+      if (token.discordId) {
+        const stale =
+          !token.lastChecked || Date.now() - token.lastChecked > RECHECK_INTERVAL_MS;
+
+        if (stale) {
+          const { authorized } = await isUserAuthorized(token.discordId);
+          token.authorized = authorized;
+          token.lastChecked = Date.now();
+        }
+      }
+
+      return token;
+    },
+
+    // Se ejecuta cada vez que el cliente pide la sesión (useSession, getServerSession).
+    async session({ session, token }) {
+      if (!token.authorized) {
+        // Fuerza a que se lo trate como no autenticado en el próximo chequeo
+        // del cliente (useSession detecta esto y redirige a login).
+        return null;
+      }
+      session.discordId = token.discordId;
+      return session;
     },
   },
 };
