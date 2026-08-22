@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 
-// LISTADO DE ROLES PERMITIDOS (Gobierno, USSS, USMS, LSC, LSPD)
+// LISTADO DE ROLES PERMITIDOS
 const ALLOWED_ROLE_IDS = [
   "869199672311427082", // Gobierno
   "883117884929376257", // USSS
@@ -15,7 +15,7 @@ export const authOptions = {
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
-      authorization: { params: { scope: "identify guilds" } },
+      authorization: { params: { scope: "identify guilds guilds.members.read" } },
     }),
   ],
   callbacks: {
@@ -23,7 +23,7 @@ export const authOptions = {
       try {
         const token = account.access_token;
 
-        // 1. Obtener la lista de todos los servidores en los que está el usuario
+        // 1. Obtener la lista de servidores del usuario
         const guildsResponse = await fetch("https://discord.com/api/v10/users/@me/guilds", {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -32,7 +32,7 @@ export const authOptions = {
 
         const userGuilds = await guildsResponse.json();
 
-        // 2. Recorrer cada servidor para comprobar si posee alguno de los roles permitidos
+        // 2. Consultar la información del usuario en cada servidor para leer sus roles
         for (const guild of userGuilds) {
           const memberResponse = await fetch(
             `https://discord.com/api/v10/users/@me/guilds/${guild.id}/member`,
@@ -45,18 +45,17 @@ export const authOptions = {
             const memberData = await memberResponse.json();
             const userRoles = memberData.roles || [];
 
-            // Verifica si el usuario tiene al menos UNO de los IDs de rol autorizados
+            // Comprobar si el usuario posee alguno de los roles permitidos
             const hasAuthorizedRole = userRoles.some((roleId) =>
               ALLOWED_ROLE_IDS.includes(roleId)
             );
 
             if (hasAuthorizedRole) {
-              return true; // Acceso concedido inmediatamente
+              return true;
             }
           }
         }
 
-        // Si no se encontró ninguno de los roles en ningún servidor
         return false;
       } catch (error) {
         console.error("Error al validar roles de Discord:", error);
