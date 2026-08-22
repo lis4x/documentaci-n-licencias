@@ -1,9 +1,7 @@
 import NextAuth from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
-import { isUserAuthorized } from "../../../../lib/discordAuth";
+import { checkUserRoles, refreshDiscordToken } from "../../../../lib/discordAuth";
 
-// Cada cuánto se vuelve a chequear el rol en Discord mientras la sesión
-// sigue "viva" en el navegador (independiente del maxAge de la sesión).
 const RECHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
 
 export const authOptions = {
@@ -11,56 +9,61 @@ export const authOptions = {
     DiscordProvider({
       clientId: process.env.DISCORD_CLIENT_ID,
       clientSecret: process.env.DISCORD_CLIENT_SECRET,
-      // Ya no necesitamos "guilds" ni "guilds.members.read": los roles se
-      // consultan server-side con el bot token, no con el token del usuario.
-      authorization: { params: { scope: "identify" } },
+      authorization: { params: { scope: "identify guilds guilds.members.read" } },
     }),
   ],
 
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60, // la sesión expira a la hora -> obliga a re-loguear/revalidar
+    maxAge: 60 * 60,
   },
 
   callbacks: {
-    // Se ejecuta una sola vez, en el momento del login.
-    async signIn({ profile }) {
-      const { authorized } = await isUserAuthorized(profile.id);
-      return authorized; // si es false, NextAuth rechaza el login
+    async signIn({ account }) {
+      const { authorized } = await checkUserRoles(account.access_token);
+      return authorized;
     },
 
-    // Se ejecuta al crear el JWT (login) y cada vez que se accede a la sesión.
-    async jwt({ token, profile, account }) {
-      if (account && profile) {
-        // Login inicial: ya pasó signIn, guardamos su id de Discord.
-        token.discordId = profile.id;
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+        token.accessTokenExpires = account.expires_at
+          ? account.expires_at * 1000
+          : Date.now() + (account.expires_in ? account.expires_in * 1000 : 3600 * 1000);
         token.authorized = true;
         token.lastChecked = Date.now();
         return token;
       }
 
-      if (token.discordId) {
-        const stale =
-          !token.lastChecked || Date.now() - token.lastChecked > RECHECK_INTERVAL_MS;
-
-        if (stale) {
-          const { authorized } = await isUserAuthorized(token.discordId);
-          token.authorized = authorized;
-          token.lastChecked = Date.now();
+      if (token.accessTokenExpires && Date.now() > token.accessTokenExpires - 60_000) {
+        const refreshed = await refreshDiscordToken(token.refreshToken);
+        if (refreshed) {
+          token.accessToken = refreshed.access_token;
+          token.refreshToken = refreshed.refresh_token ?? token.refreshToken;
+          token.accessTokenExpires = Date.now() + refreshed.expires_in * 1000;
+        } else {
+          token.authorized = false;
+          return token;
         }
+      }
+
+      const stale =
+        !token.lastChecked || Date.now() - token.lastChecked > RECHECK_INTERVAL_MS;
+
+      if (stale) {
+        const { authorized } = await checkUserRoles(token.accessToken);
+        token.authorized = authorized;
+        token.lastChecked = Date.now();
       }
 
       return token;
     },
 
-    // Se ejecuta cada vez que el cliente pide la sesión (useSession, getServerSession).
     async session({ session, token }) {
       if (!token.authorized) {
-        // Fuerza a que se lo trate como no autenticado en el próximo chequeo
-        // del cliente (useSession detecta esto y redirige a login).
         return null;
       }
-      session.discordId = token.discordId;
       return session;
     },
   },
