@@ -28,6 +28,13 @@ export default function Dashboard() {
   const headers = data[1] || data[0] || [];
   const rows = data.slice(2);
 
+  // Función mejorada de Cierre de Sesión
+  const handleLogout = async () => {
+    // Cierra sesión en NextAuth y redirige forzosamente
+    const data = await signOut({ redirect: false, callbackUrl: '/api/auth/signin' });
+    window.location.href = data.url || '/api/auth/signin';
+  };
+
   return (
     <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
       <style jsx global>{`
@@ -37,7 +44,6 @@ export default function Dashboard() {
           background-color: #0b0e14 !important;
         }
 
-        /* Fuerza la visibilidad y grosor de la barra de desplazamiento en Windows/Chrome */
         .tabla-scroll::-webkit-scrollbar {
           height: 16px !important;
           display: block !important;
@@ -49,13 +55,13 @@ export default function Dashboard() {
         }
 
         .tabla-scroll::-webkit-scrollbar-thumb {
-          background-color: #8b949e !important; /* Color gris claro bien visible */
+          background-color: #8b949e !important;
           border-radius: 8px;
           border: 3px solid #1c2128;
         }
 
         .tabla-scroll::-webkit-scrollbar-thumb:hover {
-          background-color: #ffffff !important; /* Se pone blanca al pasar el mouse */
+          background-color: #ffffff !important;
         }
       `}</style>
 
@@ -63,7 +69,7 @@ export default function Dashboard() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
         <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>Base de datos Licencias de Armas</h1>
         <button
-          onClick={() => signOut({ callbackUrl: '/' })}
+          onClick={handleLogout}
           style={{
             backgroundColor: '#dc2626',
             color: '#ffffff',
