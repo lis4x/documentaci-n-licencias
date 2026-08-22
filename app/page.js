@@ -30,12 +30,39 @@ export default function Dashboard() {
 
   return (
     <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
-      {/* Reseteo global de márgenes para eliminar el borde blanco */}
+      {/* Reseteo de márgenes y diseño personalizado de la barra de desplazamiento */}
       <style jsx global>{`
         html, body {
           margin: 0 !important;
           padding: 0 !important;
           background-color: #0b0e14 !important;
+        }
+
+        /* Estilo para navegadores basados en Chromium (Chrome, Edge, Brave, Opera) */
+        .custom-scrollbar::-webkit-scrollbar {
+          height: 12px !important; /* Grosor de la barra horizontal */
+          display: block !important;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #161b22 !important; /* Fondo del riel */
+          border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: #30363d !important; /* Color del tirador */
+          border-radius: 4px;
+          border: 2px solid #161b22;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background-color: #58a6ff !important; /* Color azul al pasar el ratón */
+        }
+
+        /* Estilo para Firefox */
+        .custom-scrollbar {
+          scrollbar-width: auto !important;
+          scrollbar-color: #30363d #161b22 !important;
         }
       `}</style>
 
@@ -59,8 +86,17 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Contenedor Tabla */}
-      <div style={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '6px', overflowX: 'auto' }}>
+      {/* Contenedor Tabla con barra de desplazamiento siempre forzada */}
+      <div 
+        className="custom-scrollbar"
+        style={{ 
+          backgroundColor: '#161b22', 
+          border: '1px solid #30363d', 
+          borderRadius: '6px', 
+          overflowX: 'scroll', /* Forzar presencia de barra horizontal */
+          paddingBottom: '6px'
+        }}
+      >
         {loading ? (
           <div style={{ padding: '24px', textAlign: 'center', color: '#8b949e' }}>Cargando registros...</div>
         ) : data.length === 0 ? (
