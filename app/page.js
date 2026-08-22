@@ -30,7 +30,6 @@ export default function Dashboard() {
 
   return (
     <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
-      {/* Reseteo de márgenes y diseño personalizado de la barra de desplazamiento */}
       <style jsx global>{`
         html, body {
           margin: 0 !important;
@@ -38,31 +37,25 @@ export default function Dashboard() {
           background-color: #0b0e14 !important;
         }
 
-        /* Estilo para navegadores basados en Chromium (Chrome, Edge, Brave, Opera) */
-        .custom-scrollbar::-webkit-scrollbar {
-          height: 12px !important; /* Grosor de la barra horizontal */
+        /* Fuerza la visibilidad y grosor de la barra de desplazamiento en Windows/Chrome */
+        .tabla-scroll::-webkit-scrollbar {
+          height: 16px !important;
           display: block !important;
         }
 
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: #161b22 !important; /* Fondo del riel */
-          border-radius: 4px;
+        .tabla-scroll::-webkit-scrollbar-track {
+          background: #1c2128 !important;
+          border-radius: 8px;
         }
 
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: #30363d !important; /* Color del tirador */
-          border-radius: 4px;
-          border: 2px solid #161b22;
+        .tabla-scroll::-webkit-scrollbar-thumb {
+          background-color: #8b949e !important; /* Color gris claro bien visible */
+          border-radius: 8px;
+          border: 3px solid #1c2128;
         }
 
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background-color: #58a6ff !important; /* Color azul al pasar el ratón */
-        }
-
-        /* Estilo para Firefox */
-        .custom-scrollbar {
-          scrollbar-width: auto !important;
-          scrollbar-color: #30363d #161b22 !important;
+        .tabla-scroll::-webkit-scrollbar-thumb:hover {
+          background-color: #ffffff !important; /* Se pone blanca al pasar el mouse */
         }
       `}</style>
 
@@ -86,15 +79,15 @@ export default function Dashboard() {
         </button>
       </div>
 
-      {/* Contenedor Tabla con barra de desplazamiento siempre forzada */}
+      {/* Contenedor de Tabla */}
       <div 
-        className="custom-scrollbar"
+        className="tabla-scroll"
         style={{ 
           backgroundColor: '#161b22', 
           border: '1px solid #30363d', 
           borderRadius: '6px', 
-          overflowX: 'scroll', /* Forzar presencia de barra horizontal */
-          paddingBottom: '6px'
+          overflowX: 'scroll',
+          paddingBottom: '8px'
         }}
       >
         {loading ? (
@@ -102,7 +95,7 @@ export default function Dashboard() {
         ) : data.length === 0 ? (
           <div style={{ padding: '24px', textAlign: 'center', color: '#8b949e' }}>No se encontraron registros o la tabla está vacía.</div>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+          <table style={{ width: '100%', minWidth: '2200px', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
             <thead>
               <tr style={{ backgroundColor: '#21262d', borderBottom: '1px solid #30363d', color: '#c9d1d9' }}>
                 {headers.map((header, i) => (
