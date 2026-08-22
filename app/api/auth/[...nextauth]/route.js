@@ -1,9 +1,8 @@
 import NextAuth from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 
-// LISTADO DE ROLES PERMITIDOS (Gobierno, USSS, USMS, LSC, LSPD)
+// LISTADO DE ROLES PERMITIDOS (, USSS, USMS, LSC, LSPD)
 const ALLOWED_ROLE_IDS = [
-  "869199672311427082", // Gobierno
   "883117884929376257", // USSS
   "972822087452459056", // USMS
   "845681987955982356", // LSC
