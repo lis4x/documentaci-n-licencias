@@ -1,39 +1,61 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { signOut } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 
 export default function Dashboard() {
+  const { data: session, status } = useSession();
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Redirigir al login si no hay sesión activa
   useEffect(() => {
-    async function fetchData() {
-      try {
-        const res = await fetch('/api/getData', { cache: 'no-store' });
-        const result = await res.json();
-        if (Array.isArray(result)) {
-          setData(result);
-        }
-      } catch (error) {
-        console.error('Error al cargar datos:', error);
-      } finally {
-        setLoading(false);
-      }
+    if (status === 'unauthenticated') {
+      window.location.href = '/api/auth/signin';
     }
+  }, [status]);
 
-    fetchData();
-  }, []);
+  // Cargar datos de la API solo si está autenticado
+  useEffect(() => {
+    if (status === 'authenticated') {
+      async function fetchData() {
+        try {
+          const res = await fetch('/api/getData', { cache: 'no-store' });
+          const result = await res.json();
+          if (Array.isArray(result)) {
+            setData(result);
+          }
+        } catch (error) {
+          console.error('Error al cargar datos:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      fetchData();
+    }
+  }, [status]);
+
+  const handleLogout = async () => {
+    const res = await signOut({ redirect: false, callbackUrl: '/api/auth/signin' });
+    window.location.href = res.url || '/api/auth/signin';
+  };
+
+  // Mientras valida la sesión, muestra pantalla de carga
+  if (status === 'loading') {
+    return (
+      <div style={{ backgroundColor: '#0b0e14', color: '#8b949e', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif' }}>
+        Verificando sesión...
+      </div>
+    );
+  }
+
+  if (status === 'unauthenticated') {
+    return null;
+  }
 
   const headers = data[1] || data[0] || [];
   const rows = data.slice(2);
-
-  // Función mejorada de Cierre de Sesión
-  const handleLogout = async () => {
-    // Cierra sesión en NextAuth y redirige forzosamente
-    const data = await signOut({ redirect: false, callbackUrl: '/api/auth/signin' });
-    window.location.href = data.url || '/api/auth/signin';
-  };
 
   return (
     <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
