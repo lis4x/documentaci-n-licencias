@@ -1,8 +1,22 @@
 import { google } from "googleapis";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "../auth/[...nextauth]/route";
 
 export const revalidate = 0;
 
 export async function GET() {
+  // 🔒 Chequeo server-side. Esto es lo que impide que alguien le pegue
+  // directo a /api/getData (con curl, Postman, o mirando el Network tab
+  // en F12) sin estar logueado y sin tener un rol autorizado.
+  // getServerSession lee la cookie de sesión (httpOnly, no accesible desde
+  // JS del navegador) y corre los mismos callbacks de authOptions, incluida
+  // la revalidación de rol.
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return Response.json({ error: "No autorizado" }, { status: 401 });
+  }
+
   try {
     const auth = new google.auth.GoogleAuth({
       credentials: {
@@ -13,7 +27,7 @@ export async function GET() {
     });
 
     const sheets = google.sheets({ version: "v4", auth });
-    const spreadsheetId = "1M30awi9M5AGlz4cn8uIFh-pqBhLezHuxUGo92XLe94g";
+    const spreadsheetId = process.env.GOOGLE_SHEET_ID;
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
