@@ -1,12 +1,15 @@
-export const metadata = {
-  title: 'Base de Datos de Licencias',
-  description: 'Sistema de consulta de licencias de armas',
-}
+'use client'
+
+import { SessionProvider } from "next-auth/react"
 
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      <body>{children}</body>
+      <body>
+        <SessionProvider>
+          {children}
+        </SessionProvider>
+      </body>
     </html>
   )
 }
