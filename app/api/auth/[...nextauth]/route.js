@@ -2,7 +2,7 @@ import NextAuth from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { checkUserRoles, refreshDiscordToken } from "../../../../lib/discordAuth";
 
-const RECHECK_INTERVAL_MS = 5 * 60 * 1000; // 5 minutos
+const RECHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hora (coincide con maxAge de la sesión)
 
 export const authOptions = {
   providers: [
@@ -15,7 +15,7 @@ export const authOptions = {
 
   session: {
     strategy: "jwt",
-    maxAge: 60 * 60,
+    maxAge: 60 * 60, // 1 hora
   },
 
   callbacks: {
