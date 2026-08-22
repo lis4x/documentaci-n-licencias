@@ -21,12 +21,10 @@ export const authOptions = {
   callbacks: {
     async signIn({ account }) {
       const result = await checkUserRoles(account.access_token);
-      // 🐛 DEBUG TEMPORAL
-      console.log("DEBUG signIn -> checkUserRoles result:", result);
       return result.authorized;
     },
 
-    async jwt({ token, account }) {
+    async jwt({ token, account, profile }) {
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
@@ -35,22 +33,19 @@ export const authOptions = {
           : Date.now() + (account.expires_in ? account.expires_in * 1000 : 3600 * 1000);
         token.authorized = true;
         token.lastChecked = Date.now();
-        // 🐛 DEBUG TEMPORAL
-        console.log("DEBUG jwt (login inicial) -> accessTokenExpires:", new Date(token.accessTokenExpires).toISOString());
+        if (profile?.id) {
+          token.discordId = profile.id;
+        }
         return token;
       }
 
       if (token.accessTokenExpires && Date.now() > token.accessTokenExpires - 60_000) {
-        // 🐛 DEBUG TEMPORAL
-        console.log("DEBUG jwt -> intentando refrescar token, expiraba:", new Date(token.accessTokenExpires).toISOString());
         const refreshed = await refreshDiscordToken(token.refreshToken);
         if (refreshed) {
           token.accessToken = refreshed.access_token;
           token.refreshToken = refreshed.refresh_token ?? token.refreshToken;
           token.accessTokenExpires = Date.now() + refreshed.expires_in * 1000;
-          console.log("DEBUG jwt -> refresh OK, nueva expiración:", new Date(token.accessTokenExpires).toISOString());
         } else {
-          console.log("DEBUG jwt -> refresh FALLÓ, se marca como no autorizado");
           token.authorized = false;
           return token;
         }
@@ -61,8 +56,6 @@ export const authOptions = {
 
       if (stale) {
         const result = await checkUserRoles(token.accessToken);
-        // 🐛 DEBUG TEMPORAL
-        console.log("DEBUG jwt (revalidación) -> checkUserRoles result:", result);
         token.authorized = result.authorized;
         token.lastChecked = Date.now();
       }
@@ -71,11 +64,10 @@ export const authOptions = {
     },
 
     async session({ session, token }) {
-      // 🐛 DEBUG TEMPORAL
-      console.log("DEBUG session -> token.authorized:", token.authorized);
       if (!token.authorized) {
         return null;
       }
+      session.discordId = token.discordId;
       return session;
     },
   },
