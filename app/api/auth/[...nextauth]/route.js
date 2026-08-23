@@ -31,8 +31,12 @@ export const authOptions = {
         token.accessTokenExpires = account.expires_at
           ? account.expires_at * 1000
           : Date.now() + (account.expires_in ? account.expires_in * 1000 : 3600 * 1000);
-        token.authorized = true;
+
+        const result = await checkUserRoles(account.access_token);
+        token.authorized = result.authorized;
+        token.faction = result.faction ?? null;
         token.lastChecked = Date.now();
+
         if (profile?.id) {
           token.discordId = profile.id;
         }
@@ -57,6 +61,7 @@ export const authOptions = {
       if (stale) {
         const result = await checkUserRoles(token.accessToken);
         token.authorized = result.authorized;
+        token.faction = result.faction ?? null;
         token.lastChecked = Date.now();
       }
 
@@ -68,6 +73,7 @@ export const authOptions = {
         return null;
       }
       session.discordId = token.discordId;
+      session.faction = token.faction;
       return session;
     },
   },
