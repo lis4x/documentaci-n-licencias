@@ -1,7 +1,7 @@
 import { google } from "googleapis";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../auth/[...nextauth]/route";
-import { DATABASES } from "../../../lib/databases";
+import { DATABASES, isAuthorizedForDb } from "../../../lib/databases";
 
 export const revalidate = 0;
 
@@ -63,7 +63,7 @@ export async function GET(request) {
 
   // Chequeo de acceso REAL en el servidor: aunque alguien fuerce la URL con
   // ?db=empresas, si su facción no está en allowedFactions, se lo rechaza acá.
-  if (!dbConfig.allowedFactions.includes(session.faction)) {
+  if (!isAuthorizedForDb(dbConfig, session)) {
     logAccess({ discordId: session.discordId, dbId, status: "forbidden" });
     return Response.json(
       { error: "No tenés permiso para acceder a esta base de datos" },
