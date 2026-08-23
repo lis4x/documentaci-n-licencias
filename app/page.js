@@ -4,6 +4,13 @@ import { useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { DATABASES, getDatabasesForSession } from '../lib/databases';
 
+function getStatusColor(value) {
+  const v = String(value).trim().toUpperCase();
+  if (v === 'VENCIDO') return '#f85149';
+  if (v === 'VIGENTE') return '#3fb950';
+  return undefined;
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const [selectedDb, setSelectedDb] = useState(null);
@@ -158,7 +165,7 @@ export default function Dashboard() {
         ) : data.length === 0 ? (
           <div style={{ padding: '24px', textAlign: 'center', color: '#8b949e' }}>No se encontraron registros o la tabla está vacía.</div>
         ) : (
-          <table style={{ borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
             <thead>
               <tr style={{ backgroundColor: '#21262d', borderBottom: '1px solid #30363d', color: '#c9d1d9' }}>
                 {headers.map((header, i) => (
@@ -171,11 +178,24 @@ export default function Dashboard() {
             <tbody>
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex} style={{ borderBottom: '1px solid #21262d' }}>
-                  {headers.map((_, colIndex) => (
-                    <td key={colIndex} style={{ padding: '10px 12px', borderRight: '1px solid #21262d', color: '#8b949e', whiteSpace: 'nowrap' }}>
-                      {row[colIndex] || ''}
-                    </td>
-                  ))}
+                  {headers.map((_, colIndex) => {
+                    const value = row[colIndex] || '';
+                    const statusColor = getStatusColor(value);
+                    return (
+                      <td
+                        key={colIndex}
+                        style={{
+                          padding: '10px 12px',
+                          borderRight: '1px solid #21262d',
+                          color: statusColor || '#8b949e',
+                          fontWeight: statusColor ? '600' : 'normal',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {value}
+                      </td>
+                    );
+                  })}
                 </tr>
               ))}
             </tbody>
