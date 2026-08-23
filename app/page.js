@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { getDatabasesForFaction } from '../lib/databases';
+import { DATABASES, getDatabasesForSession } from '../lib/databases';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -11,7 +11,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false);
 
   const availableDbs =
-    status === 'authenticated' ? getDatabasesForFaction(session.faction) : [];
+    status === 'authenticated' ? getDatabasesForSession(session) : [];
 
   // Cargar datos de la base seleccionada
   useEffect(() => {
@@ -104,8 +104,9 @@ export default function Dashboard() {
 
   // --- Estado: mostrando la tabla de la base seleccionada ---
   const dbLabel = availableDbs.find((db) => db.id === selectedDb)?.label || '';
-  const headers = data[1] || data[0] || [];
-  const rows = data.slice(2);
+  const headerRowIndex = DATABASES[selectedDb]?.headerRow ?? 1;
+  const headers = data[headerRowIndex] || [];
+  const rows = data.slice(headerRowIndex + 1);
 
   return (
     <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
