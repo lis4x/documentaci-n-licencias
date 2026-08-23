@@ -72,7 +72,6 @@ export default function Dashboard() {
       >
         <img src="/logo-gobierno.png" alt="Gobierno de San Andreas" style={{ width: '64px', height: '64px' }} />
         <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0 }}>Panel de Bases de Datos</h1>
-        <p style={{ color: '#c9d1d9', margin: 0 }}>Sesión cerrada. Iniciá sesión para continuar.</p>
         <button onClick={() => signIn('discord', { callbackUrl: '/' })} style={discordButtonStyle}>
           Iniciar sesión con Discord
         </button>
