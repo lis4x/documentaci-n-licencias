@@ -5,7 +5,7 @@ import { SessionProvider } from "next-auth/react"
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
-      <body>
+      <body style={{ margin: 0, padding: 0, backgroundColor: '#0b0e14' }}>
         {/* refetchInterval en segundos: cada 1 hora vuelve a pedir la sesión
             automáticamente (sin depender de que el usuario recargue o
             cambie de pestaña), lo que dispara la revalidación de roles
