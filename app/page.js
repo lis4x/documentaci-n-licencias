@@ -83,7 +83,10 @@ export default function Dashboard() {
     return (
       <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Panel de Bases de Datos</h1>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <img src="/logo-gobierno.png" alt="Gobierno de San Andreas" style={{ width: '40px', height: '40px' }} />
+            <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Panel de Bases de Datos</h1>
+          </div>
           <button onClick={handleLogout} style={logoutButtonStyle}>Salir</button>
         </div>
 
@@ -94,6 +97,9 @@ export default function Dashboard() {
               onClick={() => setSelectedDb(db.id)}
               style={cardButtonStyle}
             >
+              {db.id === 'empresas' && (
+                <img src="/logo-agencia.png" alt="Agencia de Empresas, Servicios y Transporte" style={{ width: '48px', height: '48px', marginBottom: '10px' }} />
+              )}
               {db.label}
             </button>
           ))}
@@ -216,4 +222,7 @@ const cardButtonStyle = {
   fontWeight: '600',
   cursor: 'pointer',
   textAlign: 'center',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
 };
