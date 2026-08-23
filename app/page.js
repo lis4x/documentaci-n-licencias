@@ -114,6 +114,9 @@ export default function Dashboard() {
               {db.id === 'empresas' && (
                 <img src="/logo-agencia.png" alt="Agencia de Empresas, Servicios y Transporte" style={{ width: '48px', height: '48px', marginBottom: '10px' }} />
               )}
+              {db.id === 'armas' && (
+                <img src="/logo-armas.png" alt="Bureau of Firearms and Personal Defense" style={{ width: '48px', height: '48px', marginBottom: '10px' }} />
+              )}
               {db.label}
             </button>
           ))}
