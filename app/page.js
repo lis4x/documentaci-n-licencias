@@ -2,137 +2,132 @@
 
 import { useEffect, useState } from 'react';
 import { useSession, signIn, signOut } from 'next-auth/react';
+import { getDatabasesForFaction } from '../lib/databases';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
+  const [selectedDb, setSelectedDb] = useState(null);
   const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  // Cargar datos de la API solo si está autenticado
+  const availableDbs =
+    status === 'authenticated' ? getDatabasesForFaction(session.faction) : [];
+
+  // Cargar datos de la base seleccionada
   useEffect(() => {
-    if (status === 'authenticated') {
-      async function fetchData() {
-        try {
-          const res = await fetch('/api/getData', { cache: 'no-store' });
-          const result = await res.json();
-          if (Array.isArray(result)) {
-            setData(result);
-          }
-        } catch (error) {
-          console.error('Error al cargar datos:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
+    if (status !== 'authenticated' || !selectedDb) return;
 
-      fetchData();
+    let cancelled = false;
+
+    async function fetchData() {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/getData?db=${selectedDb}`, { cache: 'no-store' });
+        const result = await res.json();
+        if (!cancelled && Array.isArray(result)) {
+          setData(result);
+        }
+      } catch (error) {
+        console.error('Error al cargar datos:', error);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
-  }, [status]);
+
+    fetchData();
+    return () => {
+      cancelled = true;
+    };
+  }, [status, selectedDb]);
 
   const handleLogout = async () => {
     const res = await signOut({ redirect: false, callbackUrl: '/' });
     window.location.href = res.url || '/';
   };
 
-  // Mientras valida la sesión, muestra pantalla de carga
+  // --- Estado: verificando sesión ---
   if (status === 'loading') {
     return (
-      <div style={{ backgroundColor: '#0b0e14', color: '#8b949e', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif' }}>
-        Verificando sesión...
-      </div>
+      <div style={pageCenterStyle}>Verificando sesión...</div>
     );
   }
 
-  // En vez de redirigir solo, mostramos una pantalla propia con un botón.
-  // Así el usuario elige cuándo volver a autorizar en Discord, en lugar
-  // de que "Salir" lo mande directo de nuevo al popup de consentimiento.
+  // --- Estado: sin sesión ---
   if (status === 'unauthenticated') {
     return (
-      <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', fontFamily: 'sans-serif', gap: '20px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0 }}>Base de datos Licencias de Armas</h1>
+      <div style={{ ...pageCenterStyle, flexDirection: 'column', gap: '20px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0 }}>Panel de Bases de Datos</h1>
         <p style={{ color: '#8b949e', margin: 0 }}>Sesión cerrada. Iniciá sesión para continuar.</p>
-        <button
-          onClick={() => signIn('discord', { callbackUrl: '/' })}
-          style={{
-            backgroundColor: '#5865F2',
-            color: '#ffffff',
-            border: 'none',
-            padding: '10px 20px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: '600',
-            fontSize: '14px'
-          }}
-        >
+        <button onClick={() => signIn('discord', { callbackUrl: '/' })} style={discordButtonStyle}>
           Iniciar sesión con Discord
         </button>
       </div>
     );
   }
 
+  // --- Estado: autenticado, sin ninguna base disponible para su facción ---
+  if (availableDbs.length === 0) {
+    return (
+      <div style={{ ...pageCenterStyle, flexDirection: 'column', gap: '16px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Sin acceso</h1>
+        <p style={{ color: '#8b949e', margin: 0, textAlign: 'center', maxWidth: '360px' }}>
+          Tu rol no tiene ninguna base de datos asignada. Si creés que es un error, contactá a un administrador.
+        </p>
+        <button onClick={handleLogout} style={logoutButtonStyle}>Salir</button>
+      </div>
+    );
+  }
+
+  // --- Estado: autenticado, mostrando el selector de bases ---
+  if (!selectedDb) {
+    return (
+      <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Panel de Bases de Datos</h1>
+          <button onClick={handleLogout} style={logoutButtonStyle}>Salir</button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '16px', maxWidth: '900px' }}>
+          {availableDbs.map((db) => (
+            <button
+              key={db.id}
+              onClick={() => setSelectedDb(db.id)}
+              style={cardButtonStyle}
+            >
+              {db.label}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // --- Estado: mostrando la tabla de la base seleccionada ---
+  const dbLabel = availableDbs.find((db) => db.id === selectedDb)?.label || '';
   const headers = data[1] || data[0] || [];
   const rows = data.slice(2);
 
   return (
     <div style={{ backgroundColor: '#0b0e14', color: '#e6edf3', minHeight: '100vh', padding: '24px', fontFamily: 'sans-serif' }}>
       <style jsx global>{`
-        html, body {
-          margin: 0 !important;
-          padding: 0 !important;
-          background-color: #0b0e14 !important;
-        }
-
-        .tabla-scroll::-webkit-scrollbar {
-          height: 16px !important;
-          display: block !important;
-        }
-
-        .tabla-scroll::-webkit-scrollbar-track {
-          background: #1c2128 !important;
-          border-radius: 8px;
-        }
-
-        .tabla-scroll::-webkit-scrollbar-thumb {
-          background-color: #8b949e !important;
-          border-radius: 8px;
-          border: 3px solid #1c2128;
-        }
-
-        .tabla-scroll::-webkit-scrollbar-thumb:hover {
-          background-color: #ffffff !important;
-        }
+        html, body { margin: 0 !important; padding: 0 !important; background-color: #0b0e14 !important; }
+        .tabla-scroll::-webkit-scrollbar { height: 16px !important; display: block !important; }
+        .tabla-scroll::-webkit-scrollbar-track { background: #1c2128 !important; border-radius: 8px; }
+        .tabla-scroll::-webkit-scrollbar-thumb { background-color: #8b949e !important; border-radius: 8px; border: 3px solid #1c2128; }
+        .tabla-scroll::-webkit-scrollbar-thumb:hover { background-color: #ffffff !important; }
       `}</style>
 
-      {/* Encabezado */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>Base de datos Licencias de Armas</h1>
-        <button
-          onClick={handleLogout}
-          style={{
-            backgroundColor: '#dc2626',
-            color: '#ffffff',
-            border: 'none',
-            padding: '8px 16px',
-            borderRadius: '4px',
-            cursor: 'pointer',
-            fontWeight: '600',
-            fontSize: '13px'
-          }}
-        >
-          Salir
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button onClick={() => setSelectedDb(null)} style={backButtonStyle}>&larr; Bases</button>
+          <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, color: '#ffffff' }}>{dbLabel}</h1>
+        </div>
+        <button onClick={handleLogout} style={logoutButtonStyle}>Salir</button>
       </div>
 
-      {/* Contenedor de Tabla */}
       <div
         className="tabla-scroll"
-        style={{
-          backgroundColor: '#161b22',
-          border: '1px solid #30363d',
-          borderRadius: '6px',
-          overflowX: 'scroll',
-          paddingBottom: '8px'
-        }}
+        style={{ backgroundColor: '#161b22', border: '1px solid #30363d', borderRadius: '6px', overflowX: 'scroll', paddingBottom: '8px' }}
       >
         {loading ? (
           <div style={{ padding: '24px', textAlign: 'center', color: '#8b949e' }}>Cargando registros...</div>
@@ -166,3 +161,58 @@ export default function Dashboard() {
     </div>
   );
 }
+
+const pageCenterStyle = {
+  backgroundColor: '#0b0e14',
+  color: '#e6edf3',
+  minHeight: '100vh',
+  display: 'flex',
+  justifyContent: 'center',
+  alignItems: 'center',
+  fontFamily: 'sans-serif',
+};
+
+const discordButtonStyle = {
+  backgroundColor: '#5865F2',
+  color: '#ffffff',
+  border: 'none',
+  padding: '10px 20px',
+  borderRadius: '4px',
+  cursor: 'pointer',
+  fontWeight: '600',
+  fontSize: '14px',
+};
+
+const logoutButtonStyle = {
+  backgroundColor: '#dc2626',
+  color: '#ffffff',
+  border: 'none',
+  padding: '8px 16px',
+  borderRadius: '4px',
+  cursor: 'pointer',
+  fontWeight: '600',
+  fontSize: '13px',
+};
+
+const backButtonStyle = {
+  backgroundColor: '#21262d',
+  color: '#e6edf3',
+  border: '1px solid #30363d',
+  padding: '8px 12px',
+  borderRadius: '4px',
+  cursor: 'pointer',
+  fontWeight: '600',
+  fontSize: '13px',
+};
+
+const cardButtonStyle = {
+  backgroundColor: '#161b22',
+  border: '1px solid #30363d',
+  color: '#e6edf3',
+  borderRadius: '8px',
+  padding: '28px 16px',
+  fontSize: '15px',
+  fontWeight: '600',
+  cursor: 'pointer',
+  textAlign: 'center',
+};
