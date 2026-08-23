@@ -158,53 +158,24 @@ export default function Dashboard() {
         ) : data.length === 0 ? (
           <div style={{ padding: '24px', textAlign: 'center', color: '#8b949e' }}>No se encontraron registros o la tabla está vacía.</div>
         ) : (
-          <table style={{ width: '100%', minWidth: '2200px', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left', tableLayout: 'fixed' }}>
+          <table style={{ borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
             <thead>
               <tr style={{ backgroundColor: '#21262d', borderBottom: '1px solid #30363d', color: '#c9d1d9' }}>
-                {headers.map((header, i) => {
-                  // La columna "Persona Encargada" (u otra similar) puede tener
-                  // varios nombres separados por coma -> le damos ancho máximo
-                  // fijo y dejamos que el texto haga salto de línea adentro,
-                  // en vez de estirar toda la tabla.
-                  const isWrapCol = String(header).toUpperCase().includes('ENCARGAD');
-                  return (
-                    <th
-                      key={i}
-                      style={{
-                        padding: '10px 12px',
-                        borderRight: '1px solid #30363d',
-                        whiteSpace: isWrapCol ? 'normal' : 'nowrap',
-                        width: isWrapCol ? '220px' : 'auto',
-                      }}
-                    >
-                      {header}
-                    </th>
-                  );
-                })}
+                {headers.map((header, i) => (
+                  <th key={i} style={{ padding: '10px 12px', borderRight: '1px solid #30363d', whiteSpace: 'nowrap' }}>
+                    {header}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {rows.map((row, rowIndex) => (
                 <tr key={rowIndex} style={{ borderBottom: '1px solid #21262d' }}>
-                  {headers.map((header, colIndex) => {
-                    const isWrapCol = String(header).toUpperCase().includes('ENCARGAD');
-                    return (
-                      <td
-                        key={colIndex}
-                        style={{
-                          padding: '10px 12px',
-                          borderRight: '1px solid #21262d',
-                          color: '#8b949e',
-                          whiteSpace: isWrapCol ? 'normal' : 'nowrap',
-                          width: isWrapCol ? '220px' : 'auto',
-                          wordBreak: isWrapCol ? 'break-word' : 'normal',
-                          lineHeight: isWrapCol ? '1.4' : 'normal',
-                        }}
-                      >
-                        {row[colIndex] || ''}
-                      </td>
-                    );
-                  })}
+                  {headers.map((_, colIndex) => (
+                    <td key={colIndex} style={{ padding: '10px 12px', borderRight: '1px solid #21262d', color: '#8b949e', whiteSpace: 'nowrap' }}>
+                      {row[colIndex] || ''}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>
