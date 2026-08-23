@@ -55,9 +55,24 @@ export default function Dashboard() {
   // --- Estado: sin sesión ---
   if (status === 'unauthenticated') {
     return (
-      <div style={{ ...pageCenterStyle, flexDirection: 'column', gap: '20px' }}>
+      <div
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '20px',
+          fontFamily: 'sans-serif',
+          color: '#e6edf3',
+          backgroundImage: 'linear-gradient(rgba(11,14,20,0.75), rgba(11,14,20,0.85)), url(/login-bg.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <img src="/logo-gobierno.png" alt="Gobierno de San Andreas" style={{ width: '64px', height: '64px' }} />
         <h1 style={{ fontSize: '22px', fontWeight: 'bold', margin: 0 }}>Panel de Bases de Datos</h1>
-        <p style={{ color: '#8b949e', margin: 0 }}>Sesión cerrada. Iniciá sesión para continuar.</p>
+        <p style={{ color: '#c9d1d9', margin: 0 }}>Sesión cerrada. Iniciá sesión para continuar.</p>
         <button onClick={() => signIn('discord', { callbackUrl: '/' })} style={discordButtonStyle}>
           Iniciar sesión con Discord
         </button>
