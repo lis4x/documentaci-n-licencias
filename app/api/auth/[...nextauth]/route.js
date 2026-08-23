@@ -1,8 +1,25 @@
 import NextAuth from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
-import { checkUserRoles, refreshDiscordToken } from "../../../../lib/discordAuth";
+import { checkUserRoles, checkGuildRole, refreshDiscordToken } from "../../../../lib/discordAuth";
+import { DATABASES } from "../../../../lib/databases";
 
 const RECHECK_INTERVAL_MS = 60 * 60 * 1000; // 1 hora (coincide con maxAge de la sesión)
+
+// Calcula, para cada base que use "requiredRole", si el usuario tiene
+// ese rol puntual. Devuelve algo como { empresas: true, otraBase: false }
+async function computeExtraAccess(accessToken) {
+  const result = {};
+  for (const db of Object.values(DATABASES)) {
+    if (db.requiredRole) {
+      result[db.id] = await checkGuildRole(
+        accessToken,
+        db.requiredRole.guildId,
+        db.requiredRole.roleId
+      );
+    }
+  }
+  return result;
+}
 
 export const authOptions = {
   providers: [
@@ -35,6 +52,7 @@ export const authOptions = {
         const result = await checkUserRoles(account.access_token);
         token.authorized = result.authorized;
         token.faction = result.faction ?? null;
+        token.extraAccess = await computeExtraAccess(account.access_token);
         token.lastChecked = Date.now();
 
         if (profile?.id) {
@@ -62,6 +80,7 @@ export const authOptions = {
         const result = await checkUserRoles(token.accessToken);
         token.authorized = result.authorized;
         token.faction = result.faction ?? null;
+        token.extraAccess = await computeExtraAccess(token.accessToken);
         token.lastChecked = Date.now();
       }
 
@@ -74,6 +93,7 @@ export const authOptions = {
       }
       session.discordId = token.discordId;
       session.faction = token.faction;
+      session.extraAccess = token.extraAccess ?? {};
       return session;
     },
   },
