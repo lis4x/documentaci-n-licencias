@@ -1,6 +1,6 @@
 'use client'
-
 import { SessionProvider } from "next-auth/react"
+import { Analytics } from "@vercel/analytics/next"
 
 export default function RootLayout({ children }) {
   return (
@@ -10,10 +10,11 @@ export default function RootLayout({ children }) {
             automáticamente (sin depender de que el usuario recargue o
             cambie de pestaña), lo que dispara la revalidación de roles
             en el callback jwt de route.js. Coincide con el maxAge de la
-            sesión, así no generamos chequeos de más. */}
+            sesión*/}
         <SessionProvider refetchInterval={60 * 60} refetchOnWindowFocus={true}>
           {children}
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   )
