@@ -1,5 +1,5 @@
 {
-  "name": "licencias-armas",
+  "name": "bases-de-datos",
   "version": "1.0.0",
   "private": true,
   "scripts": {
@@ -8,6 +8,7 @@
     "start": "next start"
   },
   "dependencies": {
+    "@vercel/analytics": "^1.3.1",
     "googleapis": "^131.0.0",
     "next": "14.1.0",
     "next-auth": "4.24.6",
