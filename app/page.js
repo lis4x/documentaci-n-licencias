@@ -12,7 +12,8 @@ function SinAcceso({ onAction, actionLabel }) {
       <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Sin acceso</h1>
       <p style={{ color: '#8b949e', margin: 0, textAlign: 'center', maxWidth: '360px' }}>
         No pertenecés a ninguna facción autorizada o no tenés un rol habilitado
-        dentro de tu facción. Si creés que es un error, contactá a un administrador.
+        dentro de tu facción. Si creés que es un error, contactá con la Agencia
+        de Empresas, Servicios y Transporte.
       </p>
       <button onClick={onAction} style={logoutButtonStyle}>{actionLabel}</button>
     </div>
