@@ -1,8 +1,23 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { DATABASES, getDatabasesForSession } from '../lib/databases';
+
+
+function SinAcceso({ onAction, actionLabel }) {
+  return (
+    <div style={{ ...pageCenterStyle, flexDirection: 'column', gap: '16px' }}>
+      <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Sin acceso</h1>
+      <p style={{ color: '#8b949e', margin: 0, textAlign: 'center', maxWidth: '360px' }}>
+        No pertenecés a ninguna facción autorizada o no tenés un rol habilitado
+        dentro de tu facción. Si creés que es un error, contactá a un administrador.
+      </p>
+      <button onClick={onAction} style={logoutButtonStyle}>{actionLabel}</button>
+    </div>
+  );
+}
 
 function getStatusColor(value) {
   const v = String(value).trim().toUpperCase();
@@ -11,8 +26,10 @@ function getStatusColor(value) {
   return undefined;
 }
 
-export default function Dashboard() {
+function Dashboard() {
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+  const authError = searchParams.get('error');
   const [selectedDb, setSelectedDb] = useState(null);
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -59,6 +76,16 @@ export default function Dashboard() {
     );
   }
 
+  // --- Estado: sin sesión, rechazado por falta de facción/rol ---
+  if (status === 'unauthenticated' && authError) {
+    return (
+      <SinAcceso
+        onAction={() => signIn('discord', { callbackUrl: '/' })}
+        actionLabel="Reintentar"
+      />
+    );
+  }
+
   // --- Estado: sin sesión ---
   if (status === 'unauthenticated') {
     return (
@@ -88,15 +115,7 @@ export default function Dashboard() {
 
   // --- Estado: autenticado, sin ninguna base disponible para su facción ---
   if (availableDbs.length === 0) {
-    return (
-      <div style={{ ...pageCenterStyle, flexDirection: 'column', gap: '16px' }}>
-        <h1 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0 }}>Sin acceso</h1>
-        <p style={{ color: '#8b949e', margin: 0, textAlign: 'center', maxWidth: '360px' }}>
-          Tu rol no tiene ninguna base de datos asignada. Si creés que es un error, contactá a un administrador.
-        </p>
-        <button onClick={handleLogout} style={logoutButtonStyle}>Salir</button>
-      </div>
-    );
+    return <SinAcceso onAction={handleLogout} actionLabel="Salir" />;
   }
 
   // --- Estado: autenticado, mostrando el selector de bases ---
@@ -203,6 +222,14 @@ export default function Dashboard() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={<div style={pageCenterStyle}>Verificando sesión...</div>}>
+      <Dashboard />
+    </Suspense>
   );
 }
 
