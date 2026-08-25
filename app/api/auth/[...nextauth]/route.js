@@ -35,6 +35,11 @@ export const authOptions = {
     maxAge: 60 * 60, // 1 hora
   },
 
+  
+  pages: {
+    error: "/",
+  },
+
   callbacks: {
     async signIn({ account }) {
       const result = await checkUserRoles(account.access_token);
